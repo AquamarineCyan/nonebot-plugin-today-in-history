@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "nonebot-plugin-today-in-history"
+version = "0.0.1"
+description = "Send Today In History to friends or group chat"
+authors = ["AquamarineCyan <1057424730@qq.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
