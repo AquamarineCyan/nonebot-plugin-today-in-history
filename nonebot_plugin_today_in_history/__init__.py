@@ -4,11 +4,13 @@ import json
 
 import nonebot
 from nonebot import on_command
-from .config import Config
 from nonebot import require
+from nonebot.plugin import PluginMetadata
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from nonebot.adapters.onebot.v11 import Message, MessageEvent
 from nonebot_plugin_apscheduler import scheduler
+
+from .config import Config
 
 __plugin_meta__ = PluginMetadata(
     name="历史上的今天",
