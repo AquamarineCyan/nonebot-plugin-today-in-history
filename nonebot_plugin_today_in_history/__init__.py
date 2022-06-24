@@ -10,6 +10,13 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from nonebot.adapters.onebot.v11 import Message, MessageEvent
 from nonebot_plugin_apscheduler import scheduler
 
+__plugin_meta__ = PluginMetadata(
+    name="历史上的今天",
+    description="发送每日历史上的今天",
+    usage="指令：历史上的今天",
+    config=Config
+)
+
 global_config = nonebot.get_driver().config
 plugin_config = Config(**global_config.dict())
 
