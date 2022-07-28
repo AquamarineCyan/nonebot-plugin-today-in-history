@@ -34,15 +34,20 @@ async def _(event: MessageEvent):
 # 信息获取
 async def get_history_info() -> str:
     async with httpx.AsyncClient() as client:
-        url = "https://api.iyk0.com/lishi/"
-        r = await client.get(url)
-        content = json.loads(r.text)
         month = date.today().strftime("%m")
         day = date.today().strftime("%d")
+        url1 = f"https://zhufred.gitee.io/zreader/ht/event/{month}{day}.json"
+        url2 = f"https://zhufred.gitee.io/zreader/ht/ld/{month}{day}.json"
+        r = await client.get(url1)
+        r1 = await client.get(url2)
+        content = json.loads(r.text)
+        content1 = json.loads(r1.text)
+        content += content1
+        sort_data=sorted(content, key=operator.itemgetter('year'), reverse=False)   #排序
         today = f"{month}月{day}日"
         s = f"历史上的今天 {today}\n"
-        for item in content[today]:
-            s = s + f"{item['year']} {item['title']}\n"
+        for item in sort_data:
+            s = s + f"{item['title']}\n"
         print(s)
         return s
 
