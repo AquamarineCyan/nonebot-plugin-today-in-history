@@ -14,8 +14,8 @@ class Time(BaseSettings):
 class Config(BaseSettings):
     # plugin custom config
     plugin_setting: str = "default"
-    histroy_qq_friends: list[int] = []
-    histroy_qq_groups: list[int] = []
+    history_qq_friends: list[int] = []
+    history_qq_groups: list[int] = []
     history_inform_time: list[Time()] = []
 
     class Config:
