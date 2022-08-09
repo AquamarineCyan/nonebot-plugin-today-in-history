@@ -70,9 +70,9 @@ _✨ 历史上的今天 ✨_
 
 ```
 #nonebot-plugin-today-in-history
-read_qq_friends=[12345678910] #设定要发送的QQ好友
-read_qq_groups=[123456789,123456789,123456789] #设定要发送的群
-read_inform_time=[{"HOUR":9,"MINUTE":1}] #在输入时间的时候 不要 以0开头如{"HOUR":06,"MINUTE":08}是错误的
+history_qq_friends=[12345678910] #设定要发送的QQ好友
+history_qq_groups=[123456789,123456789,123456789] #设定要发送的群
+history_inform_time=[{"HOUR":9,"MINUTE":1}] #在输入时间的时候 不要 以0开头如{"HOUR":06,"MINUTE":08}是错误的
 ```
 
 ## 🎉 使用
