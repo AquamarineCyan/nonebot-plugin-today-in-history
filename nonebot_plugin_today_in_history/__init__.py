@@ -34,6 +34,7 @@ def text_handle(text: str) -> json:
     text = text.replace("<\/a>", "")
     text = text.replace("\n", "")
 
+    # 去除html标签
     while True:
         address_head = text.find("<a target=")
         address_end = text.find(">", address_head)
@@ -42,19 +43,30 @@ def text_handle(text: str) -> json:
         text_middle = text[address_head:address_end + 1]
         text = text.replace(text_middle, "")
 
-    # api返回的文本内容中含有双引号，无法直接转换json，故做临时处理，等待后续优化
-    # 能跑就行.jpg
-    month = date.today().strftime("%m")
-    if month == "08":
-        # 1
-        address = text.find("Курск")
-        text = text[:address - 1] + text[address + 6:]
-        # 2
-        address = text.find("第一次使用")
-        text = text[:address - 3] + text[address + 13:]
-        # 3
-        address = text.find("克隆是英文")
-        text = text[:address + 5] + text[address + 51:]
+    # 去除api返回内容中不符合json格式的部分
+    # 去除key:desc值
+    address_head: int = 0
+    while True:
+        address_head = text.find('"desc":', address_head)
+        address_end = text.find('"cover":', address_head)
+        if address_head == -1 or address_end == -1:
+            break
+        text_middle = text[address_head + 8:address_end - 2]
+        address_head = address_end
+        text = text.replace(text_middle, "")
+
+    # 去除key:title中多引号
+    address_head: int = 0
+    while True:
+        address_head = text.find('"title":', address_head)
+        address_end = text.find('"festival"', address_head)
+        if address_head == -1 or address_end == -1:
+            break
+        text_middle = text[address_head + 9:address_end - 2]
+        if '"' in text_middle:
+            text_middle = text_middle.replace('"', " ")
+            text = text[:address_head + 9] + text_middle + text[address_end - 2:]
+        address_head = address_end
 
     data = json.loads(text)
     return data
