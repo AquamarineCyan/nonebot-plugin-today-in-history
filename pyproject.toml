@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-today-in-history"
-version = "0.0.6"
+version = "0.0.7"
 description = "Send Today In History to friends or group chat"
 authors = [
     {name = "AquamarineCyan", email = "1057424730@qq.com"},
@@ -8,10 +8,10 @@ authors = [
 license-expression = "MIT"
 dependencies = [
     "nonebot2>=2.0.0b4",
-    "nonebot-adapter-onebot>=2.0.0b1",
+    "nonebot-adapter-onebot>=2.1.1",
     "nonebot-plugin-apscheduler>=0.1.2",
-    "httpx>=0.23.0",
-    "pyoperator>=0.1"
+    "nonebot-plugin-htmlrender>=0.1.1",
+    "httpx>=0.23.0"
 ]
 requires-python = ">=3.8"
 readme = "README.md"
