@@ -3,7 +3,7 @@ import httpx
 import json
 
 import nonebot
-from nonebot import on_command
+from nonebot import on_command, on_fullmatch
 from nonebot.plugin import PluginMetadata
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, MessageSegment
 from nonebot_plugin_apscheduler import scheduler
@@ -21,7 +21,7 @@ __plugin_meta__ = PluginMetadata(
 global_config = nonebot.get_driver().config
 plugin_config = Config(**global_config.dict())
 
-history_matcher = on_command('历史上的今天', priority=15)
+history_matcher = on_fullmatch('历史上的今天', priority=15)
 
 
 @history_matcher.handle()
