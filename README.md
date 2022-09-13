@@ -29,6 +29,8 @@ _✨ 历史上的今天 ✨_
 
 鸣谢 [bingganhe123/60s-](https://github.com/bingganhe123/60s-) ~~进行一个简单的抄~~
 
+**推荐python`3.9+`
+
 ## 💿 安装
 
 <details>
@@ -78,6 +80,8 @@ history_inform_time=[{"HOUR":9,"MINUTE":1}] #在输入时间的时候 不要 以
 ## 🎉 使用
 
 - 发送 `历史上的今天`
+
+    > 完全匹配 `历史上的今天`
 
 - 定时任务，`.env`配置发送好友、群、时间
 
