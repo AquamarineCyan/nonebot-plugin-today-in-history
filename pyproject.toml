@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-today-in-history"
-version = "0.0.7"
+version = "0.0.8"
 description = "Send Today In History to friends or group chat"
 authors = [
     {name = "AquamarineCyan", email = "1057424730@qq.com"},
