@@ -1,23 +1,13 @@
-from pydantic import BaseSettings, Extra, Field
+from typing import Union
 
-
-class Time(BaseSettings):
-    hour: int = Field(0,alias="HOUR")
-    minute: int = Field(0,alias="MINUTE")
-
-    class Config:
-        extra = "allow"
-        case_sensitive = False
-        anystr_lower = True
+from pydantic import BaseSettings
 
 
 class Config(BaseSettings):
-    # plugin custom config
-    plugin_setting: str = "default"
-    history_qq_friends: list[int] = []
-    history_qq_groups: list[int] = []
-    history_inform_time: list[Time()] = []
+    history_qq_friends: list[int] = []  # 格式[123,456]
+    history_qq_groups: list[int] = []  # 格式[123,456]
+    # 兼容v0.0.8及以下
+    history_inform_time: Union[str, list] = None  # 默认早上7:35
 
     class Config:
-        extra = Extra.allow
-        case_sensitive = False
+        extra = "ignore"

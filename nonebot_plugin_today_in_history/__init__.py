@@ -1,11 +1,11 @@
-from datetime import date
-import httpx
 import json
+from datetime import date
 
+import httpx
 import nonebot
-from nonebot import on_command, on_fullmatch
+from nonebot import get_bot, get_driver, on_fullmatch
+from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
 from nonebot.plugin import PluginMetadata
-from nonebot.adapters.onebot.v11 import Message, MessageEvent, MessageSegment
 from nonebot_plugin_apscheduler import scheduler
 from nonebot_plugin_htmlrender import text_to_pic
 
@@ -18,15 +18,35 @@ __plugin_meta__ = PluginMetadata(
     config=Config
 )
 
-global_config = nonebot.get_driver().config
-plugin_config = Config(**global_config.dict())
 
-history_matcher = on_fullmatch('历史上的今天', priority=15)
+plugin_config = Config.parse_obj(get_driver().config.dict())
+if plugin_config.history_inform_time == None:
+    hour: int = 7
+    minute: int = 35
+elif isinstance(plugin_config.history_inform_time, str):
+    hour, minute = plugin_config.history_inform_time.split(" ")
+# 兼容v0.0.8及以下
+elif isinstance(plugin_config.history_inform_time, list):
+    hour = plugin_config.history_inform_time[0]["HOUR"]
+    minute = plugin_config.history_inform_time[0]["MINUTE"]
+
+config_test = on_fullmatch("test", priority=1)
+
+
+@config_test.handle()
+async def _(event: MessageEvent):
+    await config_test.send(f"time={hour}:{minute}")
+    await config_test.send(f"is_list={isinstance(plugin_config.history_inform_time,list)}")
+    await config_test.send(f"is_str={isinstance(plugin_config.history_inform_time,str)}")
+    await config_test.send(f"is_None={plugin_config.history_inform_time==None}")
+
+
+history_matcher = on_fullmatch("历史上的今天", priority=15)
 
 
 @history_matcher.handle()
 async def _(event: MessageEvent):
-    await history_matcher.finish(Message(await get_history_info()))
+    await history_matcher.finish(await get_history_info())
 
 
 # api处理->json
@@ -65,7 +85,8 @@ def text_handle(text: str) -> json:
         text_middle = text[address_head + 9:address_end - 2]
         if '"' in text_middle:
             text_middle = text_middle.replace('"', " ")
-            text = text[:address_head + 9] + text_middle + text[address_end - 2:]
+            text = text[:address_head + 9] + \
+                text_middle + text[address_end - 2:]
         address_head = address_end
 
     data = json.loads(text)
@@ -98,16 +119,27 @@ async def get_history_info() -> MessageSegment:
 
 
 # 消息发送
-async def send_msg_today_in_histoty():
-    msg = await get_history_info()
-    for qq in plugin_config.history_qq_friends:
-        await nonebot.get_bot().send_private_msg(user_id=qq, message=Message(msg))
+# async def send_msg_today_in_histoty():
+#     msg = await get_history_info()
+#     for qq in plugin_config.history_qq_friends:
+#         await nonebot.get_bot().send_private_msg(user_id=qq, message=Message(msg))
 
-    for qq_group in plugin_config.history_qq_groups:
-        await nonebot.get_bot().send_group_msg(group_id=qq_group, message=Message(msg))
+#     for qq_group in plugin_config.history_qq_groups:
+#         await nonebot.get_bot().send_group_msg(group_id=qq_group, message=Message(msg))
 
 
 # 定时任务
-for index, time in enumerate(plugin_config.history_inform_time):
-    nonebot.logger.info("id:{},time:{}".format(index, time))
-    scheduler.add_job(send_msg_today_in_histoty, 'cron', hour=time.hour, minute=time.minute)
+# for index, time in enumerate(plugin_config.history_inform_time):
+#     nonebot.logger.info("id:{},time:{}".format(index, time))
+#     scheduler.add_job(send_msg_today_in_histoty, 'cron', hour=time.hour, minute=time.minute)
+
+
+# 定时任务
+@scheduler.scheduled_job("cron", hour=hour, minute=minute)
+async def _():
+    bot = get_bot()
+    msg = await get_history_info()
+    for qq in plugin_config.history_qq_friends:
+        await nonebot.get_bot().send_private_msg(user_id=qq, message=msg)
+    for qq_group in plugin_config.history_qq_groups:
+        await nonebot.get_bot().send_group_msg(group_id=qq_group, message=msg)
