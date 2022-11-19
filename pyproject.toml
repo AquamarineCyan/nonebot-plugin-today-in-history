@@ -1,28 +1,21 @@
-[project]
+[tool.poetry]
 name = "nonebot-plugin-today-in-history"
 version = "0.0.9"
 description = "Send Today In History to friends or group chat"
-authors = [
-    {name = "AquamarineCyan", email = "1057424730@qq.com"},
-]
-license-expression = "MIT"
-dependencies = [
-    "nonebot2>=2.0.0b4",
-    "nonebot-adapter-onebot>=2.1.1",
-    "nonebot-plugin-apscheduler>=0.1.2",
-    "nonebot-plugin-htmlrender>=0.2.0",
-    "httpx>=0.23.0"
-]
-requires-python = ">=3.9"
+authors = ["AquamarineCyan <1057424730@qq.com>"]
+license = "MIT"
 readme = "README.md"
 
-[project.urls]
-Homepage = "https://github.com/AquamarineCyan/nonebot-plugin-today-in-history"
-Repository = "https://github.com/AquamarineCyan/nonebot-plugin-today-in-history"
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+nonebot2 = "^2.0.0b4"
+nonebot-adapter-onebot = "^2.1.1"
+nonebot-plugin-apscheduler = "^0.1.2"
+nonebot-plugin-htmlrender = "^0.2.0"
+httpx = ">=0.23.0"
 
-[tool]
-[tool.pdm]
+[tool.poetry.dev-dependencies]
 
 [build-system]
-requires = ["pdm-pep517>=0.12.0"]
-build-backend = "pdm.pep517.api"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
