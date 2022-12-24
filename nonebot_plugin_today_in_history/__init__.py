@@ -3,9 +3,12 @@ from datetime import date
 
 import httpx
 import nonebot
-from nonebot import get_bot, get_driver, on_fullmatch
+from nonebot import require, get_bot, get_driver, on_fullmatch
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
 from nonebot.plugin import PluginMetadata
+
+require("nonebot_plugin_apscheduler")
+from nonebot_plugin_apscheduler import scheduler
 from nonebot_plugin_apscheduler import scheduler
 from nonebot_plugin_htmlrender import text_to_pic
 
