@@ -48,23 +48,13 @@ _✨ 历史上的今天 ✨_
     pip install nonebot-plugin-today-in-history
 
 
-打开 nonebot2 项目的 `bot.py` 文件, 在其中写入
+打开 nonebot2 项目根目录下的 `pyproject.toml` 文件, 在 `[tool.nonebot]` 部分追加写入
 
-    nonebot.load_plugin('nonebot_plugin_today_in_history')
-
-</details>
-
-<details>
-<summary>从 github 安装</summary>
-在 nonebot2 项目的插件目录下, 打开命令行, 输入以下命令克隆此储存库
-
-    git clone https://github.com/AquamarineCyan/nonebot-plugin-today-in-history.git
-
-打开 nonebot2 项目的 `bot.py` 文件, 在其中写入
-
-    nonebot.load_plugin('src.plugins.nonebot_plugin_today-in-history')
+    plugins = ["nonebot_plugin_today_in_history"]
 
 </details>
+
+
 
 ## ⚙️ 配置
 
