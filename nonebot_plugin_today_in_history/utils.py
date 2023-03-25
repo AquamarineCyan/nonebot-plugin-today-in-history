@@ -1,18 +1,19 @@
+
+import httpx
 from datetime import date
 from pathlib import Path
-import httpx
+
 from nonebot import require
+from nonebot.adapters.onebot.v11 import Bot, MessageSegment
 
-from nonebot.adapters.onebot.v11 import MessageSegment
-require("nonebot_plugin_htmlrender")
 from nonebot_plugin_htmlrender import text_to_pic
-
-PUSHDATA_FILE: Path = Path(__file__).parent/"PUSHDATA.json"
 
 try:
     import ujson as json
 except ModuleNotFoundError:
     import json
+
+PUSHDATA_FILE: Path = Path(__file__).parent/"PUSHDATA.json"
 
 
 def read_json(file: Path = PUSHDATA_FILE) -> dict:
@@ -29,10 +30,6 @@ def write_json(data: dict, file: Path = PUSHDATA_FILE) -> None:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
-async def get_info(id: str):
-    return f"历史上的今天_{id}"
-
-
 # 去除api返回内容中不符合json格式的部分
 def html_to_json_func(text: str) -> json:
     """html -> json"""
@@ -47,7 +44,7 @@ def html_to_json_func(text: str) -> json:
             break
         text_middle = text[address_head:address_end + 1]
         text = text.replace(text_middle, "")
-    
+
     # 去除key:desc值
     address_head: int = 0
     while True:
@@ -78,7 +75,7 @@ def html_to_json_func(text: str) -> json:
 
 
 # 信息获取
-async def get_history_info(kind :str = "text") -> MessageSegment:
+async def get_history_info(kind: str = "text") -> MessageSegment:
     async with httpx.AsyncClient() as client:
         month = date.today().strftime("%m")
         day = date.today().strftime("%d")
@@ -103,3 +100,12 @@ async def get_history_info(kind :str = "text") -> MessageSegment:
                 return MessageSegment.image(await text_to_pic(s))
         else:
             return MessageSegment.text("获取失败，请重试")
+
+
+async def refresh_group_list(bot: Bot) -> list:
+    """获取群聊列表"""
+    groups = await bot.call_api("get_group_list", no_cache=True)
+    g_list = []
+    for group in groups:
+        g_list.append(group["group_id"])
+    return g_list
