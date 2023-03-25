@@ -27,9 +27,8 @@ _✨ 历史上的今天 ✨_
 
 数据源：[历史上的今天-百度百科](https://baike.baidu.com/calendar/)
 
-鸣谢 [bingganhe123/60s-](https://github.com/bingganhe123/60s-) ~~进行一个简单的抄~~
 
-**推荐python`3.9+`
+- 推荐python`3.9+`
 
 ## 💿 安装
 
@@ -58,14 +57,26 @@ _✨ 历史上的今天 ✨_
 
 ## ⚙️ 配置
 
-在 nonebot2 项目的`.env`文件中添加以下配置
+在 nonebot2 项目的`.env`文件中添加下表中的必填配置
+
+| 配置项 | 必填 | 默认值 |  说明 |
+|:-----:|:----:|:----:|:----:|
+| history_qq_groups_all | 否 | False | 开启全部群聊推送，为`True`时`history_qq_groups`失效 |
+| history_qq_groups | 否 | [ ] | 列表形式，如[123,456] |
+| history_qq_friends | 否 | [ ] | 列表形式，如[123,456] |
+| history_inform_time | 否 | 7 35 | 每日推送时间，以空格隔开 |
+
+说明，通过群聊/私聊添加的自定义配置优先于`.env`配置
+
+上面的表格不会的可照抄下面的配置示例
 
 新版配置，`v0.0.9`及以上
 
 ```
 # nonebot-plugin-today-in-history
-history_qq_friends=[123456789,123456789] #设定要发送的QQ好友
-history_qq_groups=[123456789,123456789,123456789] #设定要发送的群
+history_qq_groups_all=False #开启全部群聊推送，为`True`时`history_qq_groups`失效
+history_qq_friends=[123,456] #设定要发送的QQ好友
+history_qq_groups=[123,456] #设定要发送的群
 history_inform_time="7 35" #设定每天发送时间，以空格间隔
 ```
 <details>
@@ -79,16 +90,23 @@ history_inform_time=[{"HOUR":9,"MINUTE":1}] #在输入时间的时候 不要 以
 ```
 </details>
 
-
-
 ## 🎉 使用
-
-- 发送 `历史上的今天`
-
-    > 完全匹配 `历史上的今天`
-
-- 定时任务，`.env`配置发送好友、群、时间
+### 指令表
+| 指令  | 说明 |
+|:-----:|:----:|
+| 历史上的今天 | 查看今天的历史上的今天 |
+| 历史上的今天+设置 | 以连续对话的形式设置历史上的今天的推送时间 |
+| 历史上的今天+设置 小时:分钟 | 设置历史上的今天的推送时间 |
+| 历史上的今天+状态 | 查看当前群聊/私聊的历史上的今天状态 |
+| 历史上的今天+禁用 | 禁用当前群聊/私聊的历史上的今天推送 |
 
 ### 效果图
 
 ![img.png](img.png)
+
+## 其他
+
+
+- [bingganhe123/60s-](https://github.com/bingganhe123/60s-) ~~进行一个简单的抄~~
+
+- [A-kirami/nonebot-plugin-moyu](https://github.com/A-kirami/nonebot-plugin-moyu) 提供的自定义配置代码块
