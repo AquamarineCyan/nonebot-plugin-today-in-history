@@ -1,11 +1,11 @@
-
-import httpx
 from datetime import date
 from pathlib import Path
 
+import httpx
 from nonebot import require
 from nonebot.adapters.onebot.v11 import Bot, MessageSegment
 
+require("nonebot_plugin_htmlrender")
 from nonebot_plugin_htmlrender import text_to_pic
 
 try:

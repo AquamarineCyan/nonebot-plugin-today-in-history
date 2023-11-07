@@ -3,29 +3,31 @@ import re
 from nonebot import get_bot, get_driver, on_command, require
 from nonebot.adapters.onebot.v11 import (
     Bot,
+    GroupMessageEvent,
     Message,
-    MessageEvent,
-    MessageSegment,
-    GroupMessageEvent
+    MessageEvent
 )
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.params import Arg, CommandArg
-from nonebot.typing import T_State
 from nonebot.plugin import PluginMetadata
+from nonebot.typing import T_State
+
+from .config import GROUP_ALL_ENV, HOUR_ENV, MINUTE_ENV, PUSHDATA_ENV, Config
+from .utils import get_history_info, read_json, refresh_group_list, write_json
 
 require("nonebot_plugin_apscheduler")
-require("nonebot_plugin_htmlrender")
 from nonebot_plugin_apscheduler import scheduler
 
-from .config import Config, PUSHDATA_ENV, HOUR_ENV, MINUTE_ENV, GROUP_ALL_ENV
-from .utils import *
 
 __plugin_meta__ = PluginMetadata(
     name="历史上的今天",
     description="发送每日历史上的今天",
     usage="指令：历史上的今天",
-    config=Config
+    type="application",
+    homepage="https://github.com/AquamarineCyan/nonebot-plugin-today-in-history",
+    config=Config,
+    supported_adapters={"~onebot.v11"},
 )
 
 driver = get_driver()
@@ -51,8 +53,9 @@ async def subscribe_jobs():
         )
         logger.debug(f"history_push_{id},{times['hour']}:{times['minute']}")
 
+
 @driver.on_bot_connect
-async def _(bot:Bot):
+async def _(bot: Bot):
     if GROUP_ALL_ENV:
         scheduler.add_job(
             push_all_group_scheduler,
@@ -166,7 +169,7 @@ async def handle_time(
         await matcher.reject("设置时间失败，请输入正确的格式，格式为：小时:分钟")
 
 
-async def push_all_group_scheduler(bot:Bot):
+async def push_all_group_scheduler(bot: Bot):
     """为bot所在全部群聊添加推送任务"""
     group_list = await refresh_group_list(bot)
     PUSHDATA = read_json()
