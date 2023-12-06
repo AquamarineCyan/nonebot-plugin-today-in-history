@@ -70,8 +70,6 @@ _✨ 历史上的今天 ✨_
 
 上面的表格不会的可照抄下面的配置示例
 
-新版配置，`v0.0.9`及以上
-
 ```
 # nonebot-plugin-today-in-history
 history_qq_groups_all=False #开启全部群聊推送，为`True`时`history_qq_groups`失效
@@ -79,16 +77,6 @@ history_qq_friends=[123,456] #设定要发送的QQ好友
 history_qq_groups=[123,456] #设定要发送的群
 history_inform_time="7 35" #设定每天发送时间，以空格间隔
 ```
-<details>
-<summary>旧版配置，`v0.0.8`及以下</summary>
-
-```
-#nonebot-plugin-today-in-history
-history_qq_friends=[12345678910] #设定要发送的QQ好友
-history_qq_groups=[123456789,123456789,123456789] #设定要发送的群
-history_inform_time=[{"HOUR":9,"MINUTE":1}] #在输入时间的时候 不要 以0开头如{"HOUR":06,"MINUTE":08}是错误的
-```
-</details>
 
 ## 🎉 使用
 ### 指令表

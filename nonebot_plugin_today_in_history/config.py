@@ -1,4 +1,3 @@
-from typing import Union
 from pydantic import BaseModel, Extra
 
 from nonebot import get_driver
@@ -13,12 +12,12 @@ class Config(BaseModel, extra=Extra.ignore):
     history_qq_groups_all: bool = False  # 为True时全开启，history_qq_groups失效
     history_qq_groups: list[int] = []  # 格式 [123,456]
     history_qq_friends: list[int] = []  # 格式 [123,456]
-    history_inform_time: Union[str, list] = None  # 默认早上7:35
+    history_inform_time: str = None  # 默认早上7:35
 
 
 plugin_config = Config.parse_obj(get_driver().config.dict())
 
-if plugin_config.history_inform_time == None:
+if plugin_config.history_inform_time is None:
     HOUR_ENV: int = 7
     MINUTE_ENV: int = 35
 elif isinstance(plugin_config.history_inform_time, str):
