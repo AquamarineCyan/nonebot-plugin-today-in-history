@@ -1,11 +1,13 @@
 import re
 
-from nonebot import get_bot, get_driver, on_command, require
+from nonebot import get_bot, get_driver, on_command, require, on_notice
 from nonebot.adapters.onebot.v11 import (
     Bot,
-    GroupMessageEvent,
     Message,
-    MessageEvent
+    MessageEvent,
+    GroupMessageEvent,
+    MessageSegment,
+    GroupIncreaseNoticeEvent,
 )
 from nonebot.log import logger
 from nonebot.matcher import Matcher
@@ -17,7 +19,7 @@ from .config import GROUP_ALL_ENV, HOUR_ENV, MINUTE_ENV, PUSHDATA_ENV, Config
 from .utils import get_history_info, read_json, refresh_group_list, write_json
 
 require("nonebot_plugin_apscheduler")
-from nonebot_plugin_apscheduler import scheduler
+from nonebot_plugin_apscheduler import scheduler  # noqa: E402
 
 
 __plugin_meta__ = PluginMetadata(
@@ -34,34 +36,42 @@ driver = get_driver()
 
 
 @driver.on_startup
-async def subscribe_jobs():
+async def _():
     PUSHDATA = read_json()
-    PUSHDATA_ENV.update(PUSHDATA)
+    PUSHDATA_ENV.update(PUSHDATA)  # json文件优先于env
     write_json(PUSHDATA_ENV)
+
     logger.info(f"history_env: {PUSHDATA_ENV}")
     logger.info(f"history_env_all_group: {GROUP_ALL_ENV}")
 
-    for id, times in PUSHDATA_ENV.items():
-        scheduler.add_job(
-            push_send,
-            "cron",
-            args=[id],
-            id=f"history_push_{id}",
-            replace_existing=True,
-            hour=times["hour"],
-            minute=times["minute"],
-        )
-        logger.debug(f"history_push_{id},{times['hour']}:{times['minute']}")
-
 
 @driver.on_bot_connect
-async def _(bot: Bot):
+async def subscribe_jobs(bot: Bot):
+    PUSHDATA = read_json()
+
+    # 好友 & 部分群聊
+    for id, times in PUSHDATA.items():
+        if (id[0:2] == "f_") or ((id[0:2] == "g_") and not GROUP_ALL_ENV):
+            scheduler.add_job(
+                push_send,
+                "cron",
+                args=[id],
+                id=f"history_push_{id}",
+                replace_existing=True,
+                hour="*",
+                # hour=times["hour"],
+                minute="*",
+                # minute=times["minute"],
+            )
+            logger.info(f"history_push_{id},{times['hour']}:{times['minute']}")
+
+    # 全部群聊
     if GROUP_ALL_ENV:
         scheduler.add_job(
             push_all_group_scheduler,
             "cron",
             args=[bot],
-            id=f"history_push_group_all",
+            id="history_push_group_all",
             replace_existing=True,
             hour=HOUR_ENV,
             minute=MINUTE_ENV,
@@ -70,24 +80,21 @@ async def _(bot: Bot):
 
 
 async def push_send(id: str):
+    logger.info(f"history_push_{id}")
     bot = get_bot()
     if id[0:2] == "g_":
-        msg = await get_history_info("image")
-        await bot.call_api("send_group_msg", group_id=int(id[2:]), message=msg)
+        # msg = await get_history_info("image")
+        msg = MessageSegment.text("hello")
+        await bot.send_group_msg(group_id=int(id[2:]), message=Message(msg))
     else:
-        msg = await get_history_info("text")
-        await bot.call_api("send_private_msg", user_id=id[2:], message=msg)
+        # msg = await get_history_info("text")
+        msg = MessageSegment.text("hello")
+        await bot.send_private_msg(user_id=id[2:], message=Message(msg))
 
 
 def calendar_subscribe(id: str, hour: int, minute: int) -> None:
     PUSHDATA_NEW = {}
-    PUSHDATA_NEW.setdefault(
-        id,
-        {
-            "hour": hour,
-            "minute": minute
-        }
-    )
+    PUSHDATA_NEW.setdefault(id, {"hour": hour, "minute": minute})
     PUSHDATA = read_json()
     PUSHDATA.update(PUSHDATA_NEW)
     write_json(PUSHDATA)
@@ -108,11 +115,7 @@ push_matcher = on_command("历史上的今天")
 
 
 @push_matcher.handle()
-async def _(
-    event: MessageEvent,
-    matcher: Matcher,
-    args: Message = CommandArg()
-):
+async def _(event: MessageEvent, matcher: Matcher, args: Message = CommandArg()):
     if isinstance(event, GroupMessageEvent):
         id = "g_{}".format(event.group_id)
     else:
@@ -123,9 +126,7 @@ async def _(
             if push_state:
                 PUSHDATA = read_json()
                 push_data = PUSHDATA.get(id)
-                msg = (
-                    f"推送时间: {push_data['hour']}:{push_data['minute']}"
-                )
+                msg = f"推送时间: {push_data['hour']}:{push_data['minute']}"
                 await matcher.finish(msg)
         elif "设置" in cmdarg or "推送" in cmdarg:
             if ":" in cmdarg or "：" in cmdarg:
@@ -146,10 +147,7 @@ async def _(
 
 @push_matcher.got("time_arg", prompt="请发送每日定时推送日历的时间，格式为：小时:分钟")
 async def handle_time(
-    event: MessageEvent,
-    matcher: Matcher,
-    state: T_State,
-    time_arg: Message = Arg()
+    event: MessageEvent, matcher: Matcher, state: T_State, time_arg: Message = Arg()
 ):
     state.setdefault("max_times", 0)
     time = time_arg.extract_plain_text()
@@ -158,10 +156,16 @@ async def handle_time(
     match = re.search(r"(\d*)[:：](\d*)", time)
     if match and match[1] and match[2]:
         if isinstance(event, GroupMessageEvent):
-            calendar_subscribe("g_{}".format(event.group_id), int(match[1]), int(match[2]))
+            calendar_subscribe(
+                "g_{}".format(event.group_id), int(match[1]), int(match[2])
+            )
         else:
-            calendar_subscribe("f_{}".format(event.user_id), int(match[1]), int(match[2]))
-        await matcher.finish(f"历史上的今天的每日推送时间已设置为：{match[1]}:{match[2]}")
+            calendar_subscribe(
+                "f_{}".format(event.user_id), int(match[1]), int(match[2])
+            )
+        await matcher.finish(
+            f"历史上的今天的每日推送时间已设置为：{match[1]}:{match[2]}"
+        )
     else:
         state["max_times"] += 1
         if state["max_times"] >= 3:
@@ -179,11 +183,7 @@ async def push_all_group_scheduler(bot: Bot):
         if id not in PUSHDATA.keys():
             PUSHDATA_NEW = {}
             PUSHDATA_NEW.setdefault(
-                id,
-                {
-                    "hour": int(HOUR_ENV),
-                    "minute": int(MINUTE_ENV)
-                }
+                id, {"hour": int(HOUR_ENV), "minute": int(MINUTE_ENV)}
             )
             PUSHDATA.update(PUSHDATA_NEW)
 
@@ -201,3 +201,22 @@ async def push_all_group_scheduler(bot: Bot):
             logger.debug(f"history_push_{id},{HOUR_ENV}:{MINUTE_ENV}")
 
     write_json(PUSHDATA)
+
+
+group_add = on_notice()
+
+
+@group_add.handle()
+async def _(bot: Bot, event: GroupIncreaseNoticeEvent):
+    logger.info("new group")
+    if GROUP_ALL_ENV:
+        scheduler.add_job(
+            push_all_group_scheduler,
+            "cron",
+            args=[bot],
+            id="history_push_group_all",
+            replace_existing=True,
+            hour=HOUR_ENV,
+            minute=MINUTE_ENV,
+        )
+        logger.info(f"history_push_group_all,{HOUR_ENV}:{MINUTE_ENV}")
