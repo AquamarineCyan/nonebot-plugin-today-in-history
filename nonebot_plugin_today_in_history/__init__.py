@@ -83,12 +83,10 @@ async def push_send(id: str):
     logger.info(f"history_push_{id}")
     bot = get_bot()
     if id[0:2] == "g_":
-        # msg = await get_history_info("image")
-        msg = MessageSegment.text("hello")
+        msg = await get_history_info("image")
         await bot.send_group_msg(group_id=int(id[2:]), message=Message(msg))
     else:
-        # msg = await get_history_info("text")
-        msg = MessageSegment.text("hello")
+        msg = await get_history_info("text")
         await bot.send_private_msg(user_id=id[2:], message=Message(msg))
 
 
