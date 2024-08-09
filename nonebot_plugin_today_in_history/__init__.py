@@ -58,10 +58,9 @@ async def subscribe_jobs(bot: Bot):
                 args=[id],
                 id=f"history_push_{id}",
                 replace_existing=True,
-                hour="*",
-                # hour=times["hour"],
-                minute="*",
-                # minute=times["minute"],
+                hour=times["hour"],
+                minute=times["minute"],
+                misfire_grace_time=60,  # 允许的误差时间
             )
             logger.info(f"history_push_{id},{times['hour']}:{times['minute']}")
 
@@ -75,6 +74,7 @@ async def subscribe_jobs(bot: Bot):
             replace_existing=True,
             hour=HOUR_ENV,
             minute=MINUTE_ENV,
+            misfire_grace_time=60,
         )
         logger.info(f"history_push_group_all,{HOUR_ENV}:{MINUTE_ENV}")
 
@@ -105,6 +105,7 @@ def calendar_subscribe(id: str, hour: int, minute: int) -> None:
         replace_existing=True,
         hour=hour,
         minute=minute,
+        misfire_grace_time=60,
     )
     logger.info(f"[{id}]设置历史上的今天推送时间为：{hour}:{minute}")
 
@@ -195,6 +196,7 @@ async def push_all_group_scheduler(bot: Bot):
                 replace_existing=True,
                 hour=int(HOUR_ENV),
                 minute=int(MINUTE_ENV),
+                misfire_grace_time=60,
             )
             logger.debug(f"history_push_{id},{HOUR_ENV}:{MINUTE_ENV}")
 
@@ -216,5 +218,6 @@ async def _(bot: Bot, event: GroupIncreaseNoticeEvent):
             replace_existing=True,
             hour=HOUR_ENV,
             minute=MINUTE_ENV,
+            misfire_grace_time=60,
         )
         logger.info(f"history_push_group_all,{HOUR_ENV}:{MINUTE_ENV}")
