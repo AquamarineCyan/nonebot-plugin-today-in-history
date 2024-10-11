@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
 
-from nonebot import get_driver
+from nonebot import get_plugin_config
 
 HOUR_ENV: int = 7
 MINUTE_ENV: int = 35
@@ -8,14 +8,14 @@ PUSHDATA_ENV: dict = {}
 GROUP_ALL_ENV: bool = False
 
 
-class Config(BaseModel, extra=Extra.ignore):
+class Config(BaseModel):
     history_qq_groups_all: bool = False  # 为True时全开启，history_qq_groups失效
     history_qq_groups: list[int] = []  # 格式 [123,456]
     history_qq_friends: list[int] = []  # 格式 [123,456]
     history_inform_time: str = None  # 默认早上7:35
 
 
-plugin_config = Config.parse_obj(get_driver().config.dict())
+plugin_config = get_plugin_config(Config)
 
 if plugin_config.history_inform_time is None:
     HOUR_ENV: int = 7
