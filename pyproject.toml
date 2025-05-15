@@ -8,12 +8,15 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
-nonebot2 = ">2.2.0"
-nonebot-adapter-onebot = ">2.3.0"
-nonebot-plugin-apscheduler = ">=0.3.0"
+nonebot2 = ">=2.2.0"
+nonebot-adapter-onebot = ">=2.4.0"
+nonebot-plugin-apscheduler = ">=0.4.0"
+nonebot_plugin_localstore = ">=0.7.0"
 nonebot-plugin-htmlrender = ">0.2.0"
-httpx = ">0.23.0"
+httpx = ">=0.26.0"
 
+[tool.ruff]
+target-version = "py39"
 
 [build-system]
 requires = ["poetry-core"]

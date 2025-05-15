@@ -1,13 +1,13 @@
 import re
 
-from nonebot import get_bot, get_driver, on_command, require, on_notice
+from nonebot import get_bot, get_driver, on_command, on_notice, require
 from nonebot.adapters.onebot.v11 import (
     Bot,
+    GroupIncreaseNoticeEvent,
+    GroupMessageEvent,
     Message,
     MessageEvent,
-    GroupMessageEvent,
     MessageSegment,
-    GroupIncreaseNoticeEvent,
 )
 from nonebot.log import logger
 from nonebot.matcher import Matcher
@@ -16,11 +16,17 @@ from nonebot.plugin import PluginMetadata
 from nonebot.typing import T_State
 
 from .config import GROUP_ALL_ENV, HOUR_ENV, MINUTE_ENV, PUSHDATA_ENV, Config
-from .utils import get_history_info, read_json, refresh_group_list, write_json
+from .utils import (
+    get_history_info_with_cache,
+    read_json,
+    refresh_group_list,
+    write_json,
+)
 
 require("nonebot_plugin_apscheduler")
+require("nonebot_plugin_htmlrender")
 from nonebot_plugin_apscheduler import scheduler  # noqa: E402
-
+from nonebot_plugin_htmlrender import text_to_pic  # noqa: E402
 
 __plugin_meta__ = PluginMetadata(
     name="历史上的今天",
@@ -43,6 +49,34 @@ async def _():
 
     logger.info(f"history_env: {PUSHDATA_ENV}")
     logger.info(f"history_env_all_group: {GROUP_ALL_ENV}")
+
+    # 启动先缓存一次
+    await get_history_info_with_cache()
+
+    # 每日零点30分刷新缓存
+    scheduler.add_job(
+        refresh_history_cache,
+        "cron",
+        id="history_cache_refresh",
+        replace_existing=True,
+        hour=0,
+        minute=30,
+        misfire_grace_time=300,  # 允许5分钟容错
+    )
+    logger.info("已注册每日历史数据缓存刷新任务：00:30")
+
+
+async def refresh_history_cache():
+    """定时刷新历史数据缓存"""
+    try:
+        logger.info("开始执行每日历史数据缓存刷新...")
+        info = await get_history_info_with_cache()
+        if info == "":
+            logger.warning("历史数据缓存刷新失败，请稍后再试")
+        else:
+            logger.success("历史数据缓存刷新完成")
+    except Exception as e:
+        logger.error(f"缓存刷新失败: {str(e)}")
 
 
 @driver.on_bot_connect
@@ -82,11 +116,15 @@ async def subscribe_jobs(bot: Bot):
 async def push_send(id: str):
     logger.info(f"history_push_{id}")
     bot = get_bot()
+    info = await get_history_info_with_cache()
+    if info == "":
+        info = "历史上的今天获取失败，请稍后再试"
+
     if id[0:2] == "g_":
-        msg = await get_history_info("image")
+        msg = MessageSegment.image(await text_to_pic(info))
         await bot.send_group_msg(group_id=int(id[2:]), message=Message(msg))
     else:
-        msg = await get_history_info("text")
+        msg = MessageSegment.text(info)
         await bot.send_private_msg(user_id=id[2:], message=Message(msg))
 
 
@@ -140,7 +178,10 @@ async def _(event: MessageEvent, matcher: Matcher, args: Message = CommandArg())
         else:
             await matcher.finish("历史上的今天的推送参数不正确")
     else:
-        msg = await get_history_info("image")
+        info = await get_history_info_with_cache()
+        if info == "":
+            info = "历史上的今天获取失败，请稍后再试"
+        msg = MessageSegment.image(await text_to_pic(info))
         await matcher.finish(msg)
 
 
@@ -198,7 +239,7 @@ async def push_all_group_scheduler(bot: Bot):
                 minute=int(MINUTE_ENV),
                 misfire_grace_time=60,
             )
-            logger.debug(f"history_push_{id},{HOUR_ENV}:{MINUTE_ENV}")
+            logger.info(f"history_push_{id},{HOUR_ENV}:{MINUTE_ENV}")
 
     write_json(PUSHDATA)
 

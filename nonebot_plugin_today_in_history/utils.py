@@ -1,19 +1,21 @@
-from datetime import date
+import asyncio
+from datetime import date, datetime
 from pathlib import Path
 
 import httpx
 from nonebot import require
-from nonebot.adapters.onebot.v11 import Bot, MessageSegment
-
-require("nonebot_plugin_htmlrender")
-from nonebot_plugin_htmlrender import text_to_pic
+from nonebot.adapters.onebot.v11 import Bot
+from nonebot.log import logger
 
 try:
     import ujson as json
 except ModuleNotFoundError:
     import json
 
-PUSHDATA_FILE: Path = Path(__file__).parent/"PUSHDATA.json"
+require("nonebot_plugin_localstore")
+import nonebot_plugin_localstore as store
+
+PUSHDATA_FILE: Path = Path(__file__).parent / "PUSHDATA.json"
 
 
 def read_json(file: Path = PUSHDATA_FILE) -> dict:
@@ -30,9 +32,8 @@ def write_json(data: dict, file: Path = PUSHDATA_FILE) -> None:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
-# 去除api返回内容中不符合json格式的部分
-def html_to_json_func(text: str) -> json:
-    """html -> json"""
+def _html_to_json_handle(text: str) -> json:
+    """去除api返回内容中不符合json格式的部分"""
     text = text.replace("<\/a>", "")
     text = text.replace("\n", "")
 
@@ -42,7 +43,7 @@ def html_to_json_func(text: str) -> json:
         address_end = text.find(">", address_head)
         if address_head == -1 or address_end == -1:
             break
-        text_middle = text[address_head:address_end + 1]
+        text_middle = text[address_head : address_end + 1]
         text = text.replace(text_middle, "")
 
     # 去除key:desc值
@@ -52,7 +53,7 @@ def html_to_json_func(text: str) -> json:
         address_end = text.find('"cover":', address_head)
         if address_head == -1 or address_end == -1:
             break
-        text_middle = text[address_head + 8:address_end - 2]
+        text_middle = text[address_head + 8 : address_end - 2]
         address_head = address_end
         text = text.replace(text_middle, "")
 
@@ -63,43 +64,46 @@ def html_to_json_func(text: str) -> json:
         address_end = text.find('"festival"', address_head)
         if address_head == -1 or address_end == -1:
             break
-        text_middle = text[address_head + 9:address_end - 2]
+        text_middle = text[address_head + 9 : address_end - 2]
         if '"' in text_middle:
             text_middle = text_middle.replace('"', " ")
-            text = text[:address_head + 9] + \
-                text_middle + text[address_end - 2:]
+            text = text[: address_head + 9] + text_middle + text[address_end - 2 :]
         address_head = address_end
 
-    data = json.loads(text)
-    return data
+    return json.loads(text)
 
 
-# 信息获取
-async def get_history_info(kind: str = "text") -> MessageSegment:
-    async with httpx.AsyncClient() as client:
-        month = date.today().strftime("%m")
-        day = date.today().strftime("%d")
-        url = f"https://baike.baidu.com/cms/home/eventsOnHistory/{month}.json"
-        r = await client.get(url)
-        if r.status_code == 200:
-            r.encoding = "unicode_escape"
-            data = html_to_json_func(r.text)
-            today = f"{month}{day}"
-            s = f"历史上的今天 {today}\n"
-            len_max = len(data[month][month + day])
-            for i in range(0, len_max):
-                str_year = data[month][today][i]["year"]
-                str_title = data[month][today][i]["title"]
-                if i == len_max - 1:
-                    s = s + f"{str_year} {str_title}"  # 去除段末空行
-                else:
-                    s = s + f"{str_year} {str_title}\n"
-            if kind == "text":
-                return MessageSegment.text(s)
-            else:
-                return MessageSegment.image(await text_to_pic(s))
-        else:
-            return MessageSegment.text("获取失败，请重试")
+async def get_history_info(retry: int = 3) -> str:
+    """获取历史上的今天信息"""
+    for _ in range(retry):
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                month = date.today().strftime("%m")
+                day = date.today().strftime("%d")
+                url = f"https://baike.baidu.com/cms/home/eventsOnHistory/{month}.json"
+
+                r = await client.get(url)
+                r.raise_for_status()  # 自动处理HTTP错误
+                r.encoding = "unicode_escape"
+
+                data = _html_to_json_handle(r.text)
+                today = f"{month}{day}"
+                info = f"历史上的今天 {today}\n"
+                len_max = len(data[month][month + day])
+
+                for i in range(0, len_max):
+                    str_year = data[month][today][i]["year"]
+                    str_title = data[month][today][i]["title"]
+                    if i == len_max - 1:
+                        info = info + f"{str_year} {str_title}"  # 去除段末空行
+                    else:
+                        info = info + f"{str_year} {str_title}\n"
+
+                return info
+
+        except (httpx.RequestError, json.JSONDecodeError) as e:
+            logger.error(f"获取历史信息失败: {e}")
+            await asyncio.sleep(2)
 
 
 async def refresh_group_list(bot: Bot) -> list:
@@ -109,3 +113,22 @@ async def refresh_group_list(bot: Bot) -> list:
     for group in groups:
         g_list.append(group["group_id"])
     return g_list
+
+
+async def get_history_info_with_cache() -> str:
+    """获取历史上的今天信息，同步更新缓存"""
+    today = int(datetime.now().strftime("%Y%m%d"))
+    cache_file = store.get_plugin_cache_file("history_cache.json")
+
+    if cache_file.exists():
+        read_data = read_json(cache_file)
+        if read_data.get("date") == today:
+            logger.info("今天数据已存在，跳过更新")
+            return read_data.get("info")
+
+    info = await get_history_info()
+    if info:
+        data_dict = {"date": today, "info": info}
+        with cache_file.open("w", encoding="utf-8") as f:
+            json.dump(data_dict, f, ensure_ascii=False, indent=4)
+    return info
