@@ -98,7 +98,7 @@ async def subscribe_jobs(bot: Bot):
             )
             logger.info(f"history_push_{id},{times['hour']}:{times['minute']}")
 
-    # 全部群聊
+    # 添加全部群聊推送事件
     if GROUP_ALL_ENV:
         scheduler.add_job(
             push_all_group_scheduler,
@@ -214,7 +214,8 @@ async def handle_time(
 
 
 async def push_all_group_scheduler(bot: Bot):
-    """为bot所在全部群聊添加推送任务"""
+    """为bot所在全部群聊推送"""
+    logger.info("all group push start")
     group_list = await refresh_group_list(bot)
     PUSHDATA = read_json()
     for group in group_list:
@@ -227,21 +228,10 @@ async def push_all_group_scheduler(bot: Bot):
             )
             PUSHDATA.update(PUSHDATA_NEW)
 
-            # 不支持创建此刻定时任务
             await push_send(id)
-            scheduler.add_job(
-                push_send,
-                "cron",
-                args=[id],
-                id=f"history_push_{id}",
-                replace_existing=True,
-                hour=int(HOUR_ENV),
-                minute=int(MINUTE_ENV),
-                misfire_grace_time=60,
-            )
-            logger.info(f"history_push_{id},{HOUR_ENV}:{MINUTE_ENV}")
 
     write_json(PUSHDATA)
+    logger.info("all group push finish")
 
 
 group_add = on_notice()
