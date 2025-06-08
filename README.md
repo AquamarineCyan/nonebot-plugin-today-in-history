@@ -61,7 +61,7 @@ _✨ 历史上的今天 ✨_
 
 | 配置项 | 必填 | 默认值 |  说明 |
 |:-----:|:----:|:----:|:----:|
-| history_qq_groups_all | 否 | False | 开启全部群聊推送，为`True`时`history_qq_groups`失效 |
+| history_qq_groups_all | 否 | False | 开启全部群聊推送<br>为 `True` 时`history_qq_groups`失效，<br>且使用 `history_inform_time` 统一发送 |
 | history_qq_groups | 否 | [ ] | 列表形式，如[123,456] |
 | history_qq_friends | 否 | [ ] | 列表形式，如[123,456] |
 | history_inform_time | 否 | 7 35 | 每日推送时间，以空格隔开 |
