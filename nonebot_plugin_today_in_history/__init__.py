@@ -217,20 +217,9 @@ async def push_all_group_scheduler(bot: Bot):
     """为bot所在全部群聊推送"""
     logger.info("all group push start")
     group_list = await refresh_group_list(bot)
-    PUSHDATA = read_json()
     for group in group_list:
         id = "g_{}".format(group)
-        # 如果群聊未被自定义，使用全局定时时间
-        if id not in PUSHDATA.keys():
-            PUSHDATA_NEW = {}
-            PUSHDATA_NEW.setdefault(
-                id, {"hour": int(HOUR_ENV), "minute": int(MINUTE_ENV)}
-            )
-            PUSHDATA.update(PUSHDATA_NEW)
-
-            await push_send(id)
-
-    write_json(PUSHDATA)
+        await push_send(id)
     logger.info("all group push finish")
 
 
@@ -241,14 +230,5 @@ group_add = on_notice()
 async def _(bot: Bot, event: GroupIncreaseNoticeEvent):
     logger.info("new group")
     if GROUP_ALL_ENV:
-        scheduler.add_job(
-            push_all_group_scheduler,
-            "cron",
-            args=[bot],
-            id="history_push_group_all",
-            replace_existing=True,
-            hour=HOUR_ENV,
-            minute=MINUTE_ENV,
-            misfire_grace_time=60,
-        )
-        logger.info(f"history_push_group_all,{HOUR_ENV}:{MINUTE_ENV}")
+        await push_send(f"g_{event.group_id}")
+        logger.info(f"已向新群 {event.group_id} 推送历史上的今天")
